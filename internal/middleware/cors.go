@@ -9,7 +9,13 @@ import (
 )
 
 func CORSMiddleware(allowedOrigins string) gin.HandlerFunc {
-	origins := strings.Split(allowedOrigins, ",")
+	rawOrigins := strings.Split(allowedOrigins, ",")
+	var origins []string
+	for _, o := range rawOrigins {
+		// Trim whitespace and trailing slash
+		cleaned := strings.TrimRight(strings.TrimSpace(o), "/")
+		origins = append(origins, cleaned)
+	}
 
 	config := cors.Config{
 		AllowOrigins:     origins,
