@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"log"
 	"strings"
 	"time"
 
@@ -19,32 +20,30 @@ func CORSMiddleware(allowedOrigins string) gin.HandlerFunc {
 		}
 	}
 
-    // Add logging to verify loaded origins
-    // log.Printf("CORS: Loaded allowed origins: %v", origins)
+	// Log for debugging - remove in production if needed
+	log.Printf("CORS: Allowed origins configured: %v", origins)
 
 	config := cors.Config{
-		AllowOrigins:     origins,
-        // Fallback to allow specific common headers if needed
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With", "X-CSRF-Token", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Access-Control-Allow-Methods"},
-		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
-		AllowCredentials: true,
-        AllowOriginFunc: func(origin string) bool {
+		// IMPORTANT: Only use AllowOriginFunc, not AllowOrigins, to avoid conflicts
+		AllowOriginFunc: func(origin string) bool {
+			cleanedOrigin := strings.TrimRight(origin, "/")
+			log.Printf("CORS: Checking origin: %s", cleanedOrigin)
 			for _, o := range origins {
 				if o == "*" {
 					return true
 				}
-				// Exact match
-				if o == origin {
-					return true
-				}
-				// Check without trailing slash (just in case config has it)
-				if strings.TrimRight(o, "/") == origin {
+				if o == cleanedOrigin {
+					log.Printf("CORS: Origin %s ALLOWED", cleanedOrigin)
 					return true
 				}
 			}
+			log.Printf("CORS: Origin %s DENIED", cleanedOrigin)
 			return false
 		},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With", "X-CSRF-Token"},
+		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
+		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}
 
