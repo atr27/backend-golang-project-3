@@ -32,25 +32,34 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	// Reset database if flag is provided
-	if *resetFlag {
-		if err := database.Reset(); err != nil {
-			log.Fatalf("Failed to reset database: %v", err)
+	// Run migrations in background to allow server to start quickly
+	// This prevents Leapcell health check timeout
+	go func() {
+		// Reset database if flag is provided
+		if *resetFlag {
+			if err := database.Reset(); err != nil {
+				log.Printf("Failed to reset database: %v", err)
+				return
+			}
+			log.Println("Database reset completed!")
 		}
-		log.Println("Database reset completed!")
-	}
 
-	// Run migrations
-	if err := database.Migrate(); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
-	}
-
-	// Seed database if flag is provided
-	if *seedFlag {
-		if err := database.Seed(); err != nil {
-			log.Fatalf("Failed to seed database: %v", err)
+		// Run migrations
+		if err := database.Migrate(); err != nil {
+			log.Printf("Failed to migrate database: %v", err)
+			return
 		}
-	}
+
+		// Seed database if flag is provided
+		if *seedFlag {
+			if err := database.Seed(); err != nil {
+				log.Printf("Failed to seed database: %v", err)
+				return
+			}
+		}
+		log.Println("Database initialization completed!")
+	}()
+
 
 	db := database.GetDB()
 
