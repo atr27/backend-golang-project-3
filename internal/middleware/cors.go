@@ -14,13 +14,15 @@ func CORSMiddleware(allowedOrigins string) gin.HandlerFunc {
 	for _, o := range rawOrigins {
 		// Trim whitespace and trailing slash
 		cleaned := strings.TrimRight(strings.TrimSpace(o), "/")
-		origins = append(origins, cleaned)
+		if cleaned != "" {
+			origins = append(origins, cleaned)
+		}
 	}
 
 	config := cors.Config{
 		AllowOrigins:     origins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With", "X-CSRF-Token"},
 		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,

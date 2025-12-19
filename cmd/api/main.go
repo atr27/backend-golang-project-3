@@ -82,9 +82,9 @@ func main() {
 	gin.SetMode(cfg.Server.GinMode)
 	router := gin.Default()
 
-	// Apply middleware
-	router.Use(middleware.LoggerMiddleware())
+	// Apply middleware - CORS must be first to handle preflight OPTIONS requests
 	router.Use(middleware.CORSMiddleware(cfg.CORS.AllowedOrigins))
+	router.Use(middleware.LoggerMiddleware())
 
 	// Health check
 	router.GET("/health", func(c *gin.Context) {
